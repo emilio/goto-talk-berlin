@@ -28,13 +28,17 @@
  * The style of a given element only depends on the styles of its ancestors.
  * Thus, we can parallelize across children of a given DOM element.
  * Speed / memory trade-offs.
- * https://crisal.io/demos/traversal.html.
+ * [crisal.io/demos/traversal.html](https://crisal.io/demos/traversal.html).
 
 ---
 
-# Rust type system's makes this tractable
+# Rust type system
+
+ * Makes tractable to introduce parallelism in such a complex system.
 
 ---
+
+ * Avoiding sharing data unsafely between threads.
 
 ```rust
 pub trait DomTraversal<E: TElement> : Sync {
@@ -42,28 +46,56 @@ pub trait DomTraversal<E: TElement> : Sync {
 }
 ```
 
- * Lifetimes ensure we don't misuse pointers that move to other threads / get
-   destroyed.
+---
+
+ * Lifetimes ensure we don't misuse or keep references for longer than what we
+   can.
+
+```rust
+#[derive(Clone, Copy)]
+pub struct GeckoNode<'ln>(pub &'ln RawGeckoNode);
+```
+
+---
 
  * `AtomicRefCell` to wrap read-write data where statically proving its correct
    usage is not possible.
 
 ---
 
-# And Rust ecosystem makes it easy!
+# Rust ecosystem
+
+ * Makes it easier to write complex code.
+ * Impossible to have stylo without a lot of code from the community.
 
 ---
 
  * `rayon`: Easy, fast, and safe parallelism primitives.
- * Lots of other crates from the community in which we depend on.
+
+```rust
+for chunk in nodes.chunks(WORK_UNIT_MAX) {
+    let nodes = chunk.iter().cloned().collect::<WorkUnit<E::ConcreteNode>>();
+    let traversal_data_copy = traversal_data.clone();
+    scope.spawn(move |scope| {
+        let n = nodes;
+        top_down_dom(&*n, 0, root,
+                     traversal_data_copy, scope, pool, traversal, tls)
+    });
+}
+```
+
+---
+
+ * Lots of other crates from the community in which we depend on for all sorts
+   of stuff.
 
 ---
 
 # Custom `derive` + generics.
 
----
-
  * Allows us to have less repetitive and more bug-free code.
+
+---
 
  * Currently derivable traits: `ToCss`, `ComputeSquaredDistance`,
    `HasViewportPercentage`, `ToAnimatedValue`, `ToComputedValue`.
@@ -130,8 +162,6 @@ pub struct nsStyleFont {
 ---
 
 # Questions / want to help out?
-
----
 
  * Ask here, or drop me a line at `emilio@mozilla.com`.
  * Lots of bugs to fix, some of them suitable for beginners.

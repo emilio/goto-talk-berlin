@@ -1,3 +1,2 @@
-.PHONY: slides
-slides: index.md
+slides.html: index.md
 	pandoc --self-contained -s -t revealjs $< -o $@
