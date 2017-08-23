@@ -17,7 +17,8 @@
  * Integrate Servo's parallel style system in Gecko.
  * 77k lines of Rust code on `components/style`, without counting dependencies.
  * Enabled on Firefox Nightly (`layout.css.servo.enabled`), probably on 57.
- * bugzil.la/stylo
+ * [hacks.mozilla.org](https://hacks.mozilla.org/2017/08/inside-a-super-fast-css-engine-quantum-css-aka-stylo/)
+ * [bugzil.la/stylo](https://bugzil.la/stylo)
 
 ---
 
