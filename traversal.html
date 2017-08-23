@@ -1,0 +1,130 @@
+<!doctype html>
+<style>
+:root {
+  --main-border-width: 10px;
+  --node-width: 80px;
+}
+
+node {
+  position: absolute;
+  top: 150%;
+  overflow: visible;
+  width: var(--node-width);
+  height: var(--node-width);
+  display: block;
+}
+
+node.styled::before {
+  background: turquoise;
+}
+
+node::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-style: solid;
+  border-color: black;
+  background: #666;
+  border-radius: calc(var(--node-width) / 2);
+  border-width: var(--main-border-width);
+  box-sizing: border-box;
+}
+
+node:only-child {
+  position: relative;
+  top: 0;
+  margin: 0 auto;
+}
+
+container {
+  position: relative;
+  display: block;
+  width: 80vw;
+  height: 100vh;
+  margin: 0 auto;
+}
+</style>
+<container>
+</container>
+<script>
+(function() {
+  const MAX_LEVEL = 5;
+  let container = document.querySelector('container');
+
+  let root = document.createElement('node');
+
+  buildLevel(root, 1);
+  container.appendChild(root);
+
+  function buildLevel(parentNode, depth) {
+    if (depth >= MAX_LEVEL)
+      return;
+
+    let offset = 1 / Math.pow(2, depth);
+
+    for (let i = 0; i < 2; ++i) {
+      let child = parentNode.appendChild(document.createElement('node'));
+      let sign = i == 0 ? -1 : 1;
+      child.style.transform = `translatex(${offset * 800 * sign}%)`;
+      buildLevel(child, depth + 1);
+    }
+  }
+
+  function reset() {
+    traverseDepthFirst(function(n) {
+      n.className = "";
+    })
+  }
+
+  async function waitABit() {
+    return new Promise(function(resolve, reject) {
+      setTimeout(resolve, 500)
+    })
+  }
+  async function style(n) {
+    n.className = "styled";
+    await waitABit();
+  }
+  async function styleDepthFirst() {
+    await traverseDepthFirst(style)
+  }
+
+  async function traverseDepthFirst(cb) {
+    let doit = async function(node) {
+      await cb(node);
+      for (let n = node.firstChild; n; n = n.nextSibling)
+        await doit(n);
+    };
+
+    await doit(root);
+  }
+
+  async function styleBreadthFirst() {
+    let queue = [];
+    let doit = async function(chunk) {
+      for (let node of chunk) {
+        await style(node);
+        let chunk = [];
+        for (let n = node.firstChild; n; n = n.nextSibling)
+          chunk.push(n);
+        queue.push(doit(chunk));
+      }
+    }
+
+    queue.push(doit([root]));
+    while (queue.length)
+      await queue.pop();
+  }
+
+  async function test() {
+    await styleDepthFirst();
+    await waitABit();
+    reset();
+    await styleBreadthFirst();
+  }
+
+  test();
+}());
+</script>
